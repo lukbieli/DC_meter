@@ -122,7 +122,9 @@ void CommM_Task(void *pvParameters)
             {
                 //uart_prepare_message(dtmp, &received_data, CurrentDrv_GetChannelConfig());
                 //uart_write_bytes(EX_UART_NUM, (const char*) dtmp, sizeof(dtmp));
-                uint8_t size = uart_prepare_message(dtmp, &received_data, CurrentDrv_GetChannelConfig());
+                CurrentDrv_Config_t config = {0};
+                CurrentDrv_GetChannelConfig(&config);
+                uint8_t size = uart_prepare_message(dtmp, &received_data, &config);
                 uart_write_bytes(EX_UART_NUM, (const char*) dtmp, size);
             }
             
@@ -229,22 +231,41 @@ static void uart_event_task(void *pvParameters)
 
 static bool pasrse_command_to_config(const uint8_t *command, uint8_t size, CurrentDrv_Config_t *config)
 {
-    if (size != 4 || command == NULL || config == NULL) {
+    if (size != 7 || command == NULL || config == NULL) {
         ESP_LOGE(TAG, "Invalid command or config");
         return false;
     }
 
+    // Parse the command to fill the CurrentDrv_Config_t structure
+    // Channel 1
     config->ch1.voltage_enabled = (command[1] & 0x01) != 0;
     config->ch1.current_enabled = (command[1] & 0x02) != 0;
     config->ch1.power_enabled = (command[1] & 0x04) != 0;
 
-    config->ch2.voltage_enabled = (command[2] & 0x01) != 0;
-    config->ch2.current_enabled = (command[2] & 0x02) != 0;
-    config->ch2.power_enabled = (command[2] & 0x04) != 0;
+    config->ch1.gain = (ina219_gain_t)(command[2] & 0x03);
+    config->ch1.bus_voltage_range = (ina219_bus_voltage_range_t)((command[2] >> 2) & 0x01);
+    config->ch1.bus_voltage_resolution = (ina219_resolution_t)((command[2] >> 4) & 0x04);
+    config->ch1.shunt_voltage_resolution = config->ch1.bus_voltage_resolution;
 
-    config->ch3.voltage_enabled = (command[3] & 0x01) != 0;
-    config->ch3.current_enabled = (command[3] & 0x02) != 0;
-    config->ch3.power_enabled = (command[3] & 0x04) != 0;
+    // Channel 2
+    config->ch2.voltage_enabled = (command[3] & 0x01) != 0;
+    config->ch2.current_enabled = (command[3] & 0x02) != 0;
+    config->ch2.power_enabled = (command[3] & 0x04) != 0;
+
+    config->ch2.gain = (ina219_gain_t)(command[4] & 0x03);
+    config->ch2.bus_voltage_range = (ina219_bus_voltage_range_t)((command[4] >> 2) & 0x01);
+    config->ch2.bus_voltage_resolution = (ina219_resolution_t)((command[4] >> 4) & 0x04);
+    config->ch2.shunt_voltage_resolution = config->ch2.bus_voltage_resolution;
+
+    // Channel 3
+    config->ch3.voltage_enabled = (command[5] & 0x01) != 0;
+    config->ch3.current_enabled = (command[5] & 0x02) != 0;
+    config->ch3.power_enabled = (command[5] & 0x04) != 0;
+
+    config->ch3.gain = (ina219_gain_t)(command[6] & 0x03);
+    config->ch3.bus_voltage_range = (ina219_bus_voltage_range_t)((command[6] >> 2) & 0x01);
+    config->ch3.bus_voltage_resolution = (ina219_resolution_t)((command[6] >> 4) & 0x04);
+    config->ch3.shunt_voltage_resolution = config->ch3.bus_voltage_resolution;
 
     // ESP_LOGI(TAG, "Channel configuration updated");
     return true;
@@ -269,13 +290,18 @@ static void uart_command_handler(const uint8_t *command, uint8_t size)
             // ESP_LOGI(TAG, "Mode command received: %d", command[1]);
             if(command[1] == 0x01)
             {
-                CurrentDrv_StartTimer();
+                CurrentDrv_StartTimer(true); // Start the timer with auto-configuration enabled
                 ESP_LOGI(TAG, "START mode activated");
             }
             else if(command[1] == 0x00)
             {
                 CurrentDrv_StopTimer();
                 ESP_LOGI(TAG, "STOP mode activated");
+            }
+            else if (command[1] == 0x02)
+            {
+                CurrentDrv_StartTimer(false); // Start the timer without auto-configuration
+                ESP_LOGI(TAG, "START mode without auto-configuration activated");
             }
             else
             {
@@ -342,19 +368,53 @@ static void uart_command_handler(const uint8_t *command, uint8_t size)
             // ESP_LOGI(TAG, "Status command received");
 
             ESP_LOGI(TAG, "Current Print Mode: %d", current_print_mode);
-            const CurrentDrv_Config_t *config = CurrentDrv_GetChannelConfig();
+            CurrentDrv_Config_t config = {0};
+            CurrentDrv_GetChannelConfig(&config);
             ESP_LOGI(TAG, "Channel 1 - Voltage: %s, Current: %s, Power: %s",
-                     config->ch1.voltage_enabled ? "Enabled" : "Disabled",
-                     config->ch1.current_enabled ? "Enabled" : "Disabled",
-                     config->ch1.power_enabled ? "Enabled" : "Disabled");
+                     config.ch1.voltage_enabled ? "Enabled" : "Disabled",
+                     config.ch1.current_enabled ? "Enabled" : "Disabled",
+                     config.ch1.power_enabled ? "Enabled" : "Disabled");
+            ESP_LOGI(TAG, "Channel 1 Gain: %d, Bus Voltage Range: %d, Bus Voltage Resolution: %d, Shunt Voltage Resolution: %d",
+                     config.ch1.gain, config.ch1.bus_voltage_range, config.ch1.bus_voltage_resolution, config.ch1.shunt_voltage_resolution);
+
             ESP_LOGI(TAG, "Channel 2 - Voltage: %s, Current: %s, Power: %s",
-                     config->ch2.voltage_enabled ? "Enabled" : "Disabled",
-                     config->ch2.current_enabled ? "Enabled" : "Disabled",
-                     config->ch2.power_enabled ? "Enabled" : "Disabled");
+                     config.ch2.voltage_enabled ? "Enabled" : "Disabled",
+                     config.ch2.current_enabled ? "Enabled" : "Disabled",
+                     config.ch2.power_enabled ? "Enabled" : "Disabled");
+            ESP_LOGI(TAG, "Channel 2 Gain: %d, Bus Voltage Range: %d, Bus Voltage Resolution: %d, Shunt Voltage Resolution: %d",
+                     config.ch2.gain, config.ch2.bus_voltage_range, config.ch2.bus_voltage_resolution, config.ch2.shunt_voltage_resolution);
+
             ESP_LOGI(TAG, "Channel 3 - Voltage: %s, Current: %s, Power: %s",
-                     config->ch3.voltage_enabled ? "Enabled" : "Disabled",
-                        config->ch3.current_enabled ? "Enabled" : "Disabled",
-                        config->ch3.power_enabled ? "Enabled" : "Disabled");
+                     config.ch3.voltage_enabled ? "Enabled" : "Disabled",
+                        config.ch3.current_enabled ? "Enabled" : "Disabled",
+                        config.ch3.power_enabled ? "Enabled" : "Disabled");
+            ESP_LOGI(TAG, "Channel 3 Gain: %d, Bus Voltage Range: %d, Bus Voltage Resolution: %d, Shunt Voltage Resolution: %d",
+                     config.ch3.gain, config.ch3.bus_voltage_range, config.ch3.bus_voltage_resolution, config.ch3.shunt_voltage_resolution);
+
+            //print command in hex for configuration
+            uint8_t cmd_hex[7] = {0};
+            cmd_hex[0] = CMD_CHANNEL_CFG;
+            cmd_hex[1] = (config.ch1.voltage_enabled ? 0x01 : 0x00) |
+                         (config.ch1.current_enabled ? 0x02 : 0x00) |
+                         (config.ch1.power_enabled ? 0x04 : 0x00);
+            cmd_hex[2] = (config.ch1.gain & 0x03) |
+                         ((config.ch1.bus_voltage_range & 0x01) << 2) |
+                         ((config.ch1.bus_voltage_resolution & 0x0f) << 4);
+            cmd_hex[3] = (config.ch2.voltage_enabled ? 0x01 : 0x00) |
+                         (config.ch2.current_enabled ? 0x02 : 0x00) |
+                            (config.ch2.power_enabled ? 0x04 : 0x00);
+            cmd_hex[4] = (config.ch2.gain & 0x03) |
+                         ((config.ch2.bus_voltage_range & 0x01) << 2) |
+                         ((config.ch2.bus_voltage_resolution & 0x0f) << 4);
+            cmd_hex[5] = (config.ch3.voltage_enabled ? 0x01 : 0x00) |
+                         (config.ch3.current_enabled ? 0x02 : 0x00) |
+                            (config.ch3.power_enabled ? 0x04 : 0x00);
+            cmd_hex[6] = (config.ch3.gain & 0x03) |
+                         ((config.ch3.bus_voltage_range & 0x01) << 2) |
+                         ((config.ch3.bus_voltage_resolution & 0x0f) << 4);
+            ESP_LOGI(TAG, "Channel configuration command in hex:");
+            ESP_LOGI(TAG, "0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X",
+                     cmd_hex[0], cmd_hex[1], cmd_hex[2], cmd_hex[3], cmd_hex[4], cmd_hex[5], cmd_hex[6]);
 
             //queue status
             if (CurrentDrv_GetQueue() != NULL) {
@@ -377,6 +437,16 @@ static void uart_command_handler(const uint8_t *command, uint8_t size)
 
         default:
             ESP_LOGE(TAG, "Unknown command type: %d", cmd_type);
+            ESP_LOGI(TAG, "Supported commands:");
+            ESP_LOGI(TAG, "Commands are sent as binary messages. The first byte is the command type, followed by command-specific data.\n");
+            ESP_LOGI(TAG, "| Command Name         | Code (hex) | Payload Format                  | Description                                 |");
+            ESP_LOGI(TAG, "|----------------------|------------|---------------------------------|---------------------------------------------|");
+            ESP_LOGI(TAG, "| Start/Stop           | 0x0A       | [0x0A, {0x01, 0x00, 0x02}]      | Start (0x01) or stop (0x00) measurement     |");
+            ESP_LOGI(TAG, "|                      |            |                                 | (0x02) to start without autoconfiguration   |");
+            ESP_LOGI(TAG, "| Set Timer Period     | 0x0B       | [0x0B, <u8>, <u8>, <u8>, <u8>]  | Set period in microseconds (little-endian)  |");
+            ESP_LOGI(TAG, "| Set Print Mode       | 0x0C       | [0x0C, 0x00] or [0x0C, 0x01]    | Raw (0x00) or ASCII (0x01) output           |");
+            ESP_LOGI(TAG, "| Channel Config       | 0x0D       | [0x0D, <ch1>, <ch2>, <ch3>]     | Set channel configuration. Details in readme|");
+            ESP_LOGI(TAG, "| Status               | 0x0E       | [0x0E]                          | Query current status/config                 |");
             break;
     }
 }

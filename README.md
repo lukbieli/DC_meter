@@ -11,6 +11,7 @@ This project implements a DC meter using up to three INA219 sensors on an ESP32 
 - Periodic measurement with configurable timer period.
 - FreeRTOS-based multitasking for measurement and communication.
 - Easily configurable I2C pins and addresses via `menuconfig`.
+- Optional auto-configuration of INA219 gain and voltage range.
 
 ## Hardware Requirements
 
@@ -41,21 +42,11 @@ INA219 I2C addresses can be set via hardware pins and configured in `menuconfig`
     ```
 3. Use a serial terminal to interact with the device via UART.
 
-### UART Commands
+## UART Protocol Details
 
-- **Start/Stop Measurement:** Send command to start or stop periodic measurement.
-- **Set Timer Period:** Change the measurement interval.
-- **Set Print Mode:** Switch between raw binary and ASCII output.
-- **Configure Channels:** Enable/disable voltage, current, power measurement per channel.
-- **Status:** Query current configuration and status.
+The device communicates over UART using a simple binary protocol for both commands and data.
 
-See `CommM.c` for command protocol details.
-
-### UART Protocol Details
-
-The device communicates over UART using a simple binary protocol for both commands and data. Below are the details for sending commands and interpreting received data.
-
-#### Data Output
+### Data Output
 
 - **Raw Binary Mode:**  
   Each message starts with two header bytes (`0xAA`, `0xBB`), followed by a length byte, and then the measurement data.  
@@ -70,43 +61,47 @@ The device communicates over UART using a simple binary protocol for both comman
   ```
   Only enabled measurements are printed.
 
-#### Command Input
+### Command Input
 
 Commands are sent as binary messages. The first byte is the command type, followed by command-specific data.
 
 | Command Name         | Code (hex) | Payload Format                  | Description                                 |
 |----------------------|------------|---------------------------------|---------------------------------------------|
-| Start/Stop           | 0x0A       | `[0x0A, 0x01]` or `[0x0A, 0x00]`| Start (`0x01`) or stop (`0x00`) measurement |
+| Start/Stop           | 0x0A       | `[0x0A, 0x01]` or `[0x0A, 0x00]` or `[0x0A, 0x02]` | Start (`0x01`), stop (`0x00`), or start without auto-config (`0x02`) |
 | Set Timer Period     | 0x0B       | `[0x0B, <u8>, <u8>, <u8>, <u8>]`| Set period in microseconds (little-endian)  |
 | Set Print Mode       | 0x0C       | `[0x0C, 0x00]` or `[0x0C, 0x01]`| Raw (`0x00`) or ASCII (`0x01`) output       |
-| Channel Config       | 0x0D       | `[0x0D, <ch1>, <ch2>, <ch3>]`   | Enable/disable V/I/P per channel (see below)|
+| Channel Config       | 0x0D       | `[0x0D, <ch1>, <cfg1>, <ch2>, <cfg2>, <ch3>, <cfg3>]` | Set channel configuration. See below. |
 | Status               | 0x0E       | `[0x0E]`                        | Query current status/config                 |
 
-**Channel Config Byte Format:**  
-Each channel config byte enables/disables measurements:
-- Bit 0: Voltage (1 = enabled)
-- Bit 1: Current (1 = enabled)
-- Bit 2: Power   (1 = enabled)
+**Channel Config Bytes:**  
+Each channel config consists of two bytes:
+- `<chX>`: Bit 0: Voltage enable, Bit 1: Current enable, Bit 2: Power enable
+- `<cfgX>`: 
+    - Bits 0-1: Gain (0=1, 1=0.5, 2=0.25, 3=0.125)
+    - Bit 2: Bus voltage range (0=16V, 1=32V)
+    - Bits 4-7: Bus voltage resolution (see `ina219.h` for values)
 
 Example:  
 To enable voltage and current for channel 1, only current for channel 2, and all for channel 3:  
-`[0x0D, 0x03, 0x02, 0x07]`  
-- ch1: 0x03 = 0b011 (voltage+current)
-- ch2: 0x02 = 0b010 (current)
-- ch3: 0x07 = 0b111 (all enabled)
+`[0x0D, 0x03, 0x10, 0x02, 0x10, 0x07, 0x10]`  
+- ch1: 0x03 = 0b011 (voltage+current), 0x10 = gain/resolution config
+- ch2: 0x02 = 0b010 (current), 0x10 = gain/resolution config
+- ch3: 0x07 = 0b111 (all enabled), 0x10 = gain/resolution config
 
-#### Example Command Sequences
+### Example Command Sequences
 
 - **Start measurement:**  
   `0x0A 0x01`
 - **Stop measurement:**  
   `0x0A 0x00`
+- **Start measurement without auto-config:**  
+  `0x0A 0x02`
 - **Set timer period to 100ms (100,000us):**  
   `0x0B 0xA0 0x86 0x01 0x00`  (0x000186A0 = 100,000)
 - **Set print mode to ASCII:**  
   `0x0C 0x01`
 - **Enable voltage+current on all channels:**  
-  `0x0D 0x03 0x03 0x03`
+  `0x0D 0x03 0x10 0x03 0x10 0x03 0x10`
 - **Query status:**  
   `0x0E`
 
