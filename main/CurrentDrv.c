@@ -34,6 +34,7 @@ static QueueHandle_t ina219_queue = NULL;
 
 static ChannelInstance_t channel_instances[3] = {
     {
+        .dev = {},
         .config = {
             .voltage_enabled = true,
             .current_enabled = true,
@@ -49,6 +50,7 @@ static ChannelInstance_t channel_instances[3] = {
         .sample_count = 0
     },
     {
+        .dev = {},
         .config = {
             .voltage_enabled = true,
             .current_enabled = true,
@@ -64,6 +66,7 @@ static ChannelInstance_t channel_instances[3] = {
         .sample_count = 0
     },
     {
+        .dev = {},
         .config = {
             .voltage_enabled = true,
             .current_enabled = true,
@@ -80,48 +83,14 @@ static ChannelInstance_t channel_instances[3] = {
     }
 };
 
-// static ina219_t dev1;
-// static ina219_t dev2;
-// static ina219_t dev3;
-
 static TaskHandle_t task_ina219_handle = NULL;
 
 static esp_timer_handle_t periodic_timer;
 static uint32_t timer_period_us = 32000; // Default timer period in microseconds
 
-// static CurrentDrv_Config_t currentDrv_config = {
-//     .ch1 = {
-//         .voltage_enabled = true,
-//         .current_enabled = true,
-//         .power_enabled = true,
-//         .gain = INA219_GAIN_0_125, // Default gain setting
-//         .bus_voltage_range = INA219_BUS_RANGE_32V, // Default bus voltage range
-//         .bus_voltage_resolution = INA219_RES_12BIT_1S, // Default bus voltage resolution
-//         .shunt_voltage_resolution = INA219_RES_12BIT_1S, // Default shunt voltage resolution
-//         .i2c_addr = 0x41 // Default I2C address for channel 1
-//     },
-//     .ch2 = {
-//         .voltage_enabled = true,
-//         .current_enabled = true,
-//         .power_enabled = true,
-//         .gain = INA219_GAIN_0_125, // Default gain setting
-//         .bus_voltage_range = INA219_BUS_RANGE_32V, // Default bus voltage range
-//         .bus_voltage_resolution = INA219_RES_12BIT_1S, // Default bus voltage resolution
-//         .shunt_voltage_resolution = INA219_RES_12BIT_1S, // Default shunt voltage resolution
-//         .i2c_addr = 0x40 // Default I2C address for channel 2
-//     },
-//     .ch3 = {
-//         .voltage_enabled = true,
-//         .current_enabled = true,
-//         .power_enabled = true,
-//         .gain = INA219_GAIN_0_125, // Default gain setting
-//         .bus_voltage_range = INA219_BUS_RANGE_32V, // Default bus voltage range
-//         .bus_voltage_resolution = INA219_RES_12BIT_1S, // Default bus voltage resolution
-//         .shunt_voltage_resolution = INA219_RES_12BIT_1S, // Default shunt voltage resolution
-//         .i2c_addr = 0x44 // Default I2C address for channel 3
-//     }
-// };
-
+// -----------------------------------------------------------------------------
+// Local Function Declarations
+// -----------------------------------------------------------------------------
 static void read_ina219_data(ChannelInstance_t* channel, ina219_data_raw_t *data);
 static void ina_init(ChannelInstance_t* channel);
 void IRAM_ATTR timer_notify_task_ina219(void* arg);
@@ -129,7 +98,9 @@ static void autoconfig_ina219(ChannelInstance_t* channel, ina219_data_raw_t *dat
 static void calculate_avg(ChannelInstance_t* channel, ina219_data_raw_t *data);
 static void update_channel_config(ChannelInstance_t* channel, CurrentDrv_ChannelCfg_t *new_cfg);
 
-
+// -----------------------------------------------------------------------------
+// Public Function Implementations
+// -----------------------------------------------------------------------------
 void CurrentDrv_Init(void)
 {
     ESP_LOGI(TAG, "Initializing Current Driver...");
@@ -269,7 +240,14 @@ void CurrentDrv_GetAvgData(ina219_full_data_t *data)
     memcpy(&data->ch3, &channel_instances[2].avg_data, sizeof(ina219_data_raw_t));
 }
 
-// Timer callback to notify task_ina219
+// -----------------------------------------------------------------------------
+// Local Function Implementations
+// -----------------------------------------------------------------------------
+/**
+ * @brief Timer callback to notify the INA219 task.
+ * 
+ * @param arg Unused argument.
+ */
 void IRAM_ATTR timer_notify_task_ina219(void* arg) {
     if (task_ina219_handle) {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
@@ -280,6 +258,11 @@ void IRAM_ATTR timer_notify_task_ina219(void* arg) {
     }
 }
 
+/**
+ * @brief Initialize a single INA219 channel instance.
+ * 
+ * @param channel Pointer to channel instance.
+ */
 static void ina_init(ChannelInstance_t* channel)
 {
     memset(&channel->dev, 0, sizeof(ina219_t));
@@ -298,6 +281,12 @@ static void ina_init(ChannelInstance_t* channel)
     ESP_ERROR_CHECK(ina219_calibrate(&channel->dev, (float)CONFIG_EXAMPLE_SHUNT_RESISTOR_MILLI_OHM / 1000.0f));  
 }
 
+/**
+ * @brief Read data from INA219 and update the channel's data struct.
+ * 
+ * @param channel Pointer to channel instance.
+ * @param data Pointer to output data struct.
+ */
 static void read_ina219_data(ChannelInstance_t* channel, ina219_data_raw_t *data)
 {
     ina219_data_t raw_data = {0};
@@ -366,6 +355,12 @@ static void read_ina219_data(ChannelInstance_t* channel, ina219_data_raw_t *data
     // }
 }
 
+/**
+ * @brief Automatically configure INA219 gain and voltage range based on measured values.
+ * 
+ * @param channel Pointer to channel instance.
+ * @param data Pointer to latest measurement data.
+ */
 static void autoconfig_ina219(ChannelInstance_t* channel, ina219_data_raw_t *data)
 {
     //depends on voltage and current and if enabled change range
@@ -428,6 +423,12 @@ static void autoconfig_ina219(ChannelInstance_t* channel, ina219_data_raw_t *dat
     }
 }
 
+/**
+ * @brief Calculate average values for a channel using historical data.
+ * 
+ * @param channel Pointer to channel instance.
+ * @param data Pointer to latest measurement data.
+ */
 static void calculate_avg(ChannelInstance_t* channel, ina219_data_raw_t *data)
 {
     if (channel == NULL || data == NULL) {
@@ -464,6 +465,12 @@ static void calculate_avg(ChannelInstance_t* channel, ina219_data_raw_t *data)
 
 }
 
+/**
+ * @brief Update the configuration for a channel and reconfigure INA219.
+ * 
+ * @param channel Pointer to channel instance.
+ * @param new_cfg Pointer to new configuration struct.
+ */
 static void update_channel_config(ChannelInstance_t* channel, CurrentDrv_ChannelCfg_t *new_cfg)
 {
     if (channel == NULL || new_cfg == NULL) {

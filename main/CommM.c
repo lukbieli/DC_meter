@@ -11,7 +11,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <freertos/queue.h>
-
 #include <driver/uart.h>
 #include "CommM.h"
 #include "CurrentDrv.h"
@@ -22,7 +21,6 @@
 // -----------------------------------------------------------------------------
 #define EX_UART_NUM UART_NUM_0
 #define PATTERN_CHR_NUM    (3)         /*!< Set the number of consecutive and identical characters received by receiver which defines a UART pattern*/
-
 #define BUF_SIZE (1024)
 #define RD_BUF_SIZE (BUF_SIZE)
 
@@ -42,15 +40,13 @@ typedef enum PrintMode {
     PRINT_MODE_ASCII = 0x01, // ASCII print mode
     PRINT_MODE_MAX
 } PrintMode_t;
+
 // -----------------------------------------------------------------------------
 // Static (Private) Variables
 // -----------------------------------------------------------------------------
-
 static QueueHandle_t uart0_queue;
 static const char *TAG = "CommM";
-
 static PrintMode_t current_print_mode = PRINT_MODE_RAW; // Default print mode
-
 
 // -----------------------------------------------------------------------------
 // Static (Private) Function Declarations
@@ -63,11 +59,17 @@ static uint8_t uart_fill_channel_data(uint8_t *buffer, const ina219_data_raw_t *
 // -----------------------------------------------------------------------------
 // Public Function Implementations
 // -----------------------------------------------------------------------------
-
+/**
+ * @brief Initialize the communication module.
+ */
 void CommM_Init(void) {
     // Initialization code here
 }
 
+/**
+ * @brief Main task for UART communication and data output.
+ * @param pvParameters FreeRTOS task parameter (unused).
+ */
 void CommM_Task(void *pvParameters)
 {
     /* Configure parameters of an UART driver,
@@ -137,8 +139,10 @@ void CommM_Task(void *pvParameters)
 // -----------------------------------------------------------------------------
 // Static (Private) Function Implementations
 // -----------------------------------------------------------------------------
-
-
+/**
+ * @brief UART event handler task.
+ * @param pvParameters FreeRTOS task parameter (unused).
+ */
 static void uart_event_task(void *pvParameters)
 {
     uart_event_t event;
@@ -157,19 +161,7 @@ static void uart_event_task(void *pvParameters)
                 case UART_DATA:
                     ESP_LOGI(TAG, "[UART DATA]: %d", event.size);
                     uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
-                    // ESP_LOGI(TAG, "[DATA EVT]:");
-                    // uart_write_bytes(EX_UART_NUM, (const char*) dtmp, event.size);
-
                     uart_command_handler(dtmp, event.size);
-                    // if(dtmp[0] > 0)
-                    // {
-                    //     //set timer period to value received from UART
-                    //     int timer_period = (int)dtmp[0];
-                    //     ESP_LOGI(TAG, "Setting timer period to %d ms", timer_period);
-                    //     esp_timer_handle_t* timerPtr = CurrentDrv_GetPeriodicTimer();
-                    //     esp_timer_stop(*timerPtr);
-                    //     esp_timer_start_periodic(*timerPtr, timer_period * 1000); // Convert ms to us
-                    // }
                     break;
                 //Event of HW FIFO overflow detected
                 case UART_FIFO_OVF:
@@ -231,6 +223,13 @@ static void uart_event_task(void *pvParameters)
     vTaskDelete(NULL);
 }
 
+/**
+ * @brief Parse channel configuration command into config struct.
+ * @param command Pointer to command buffer.
+ * @param size Size of command buffer.
+ * @param config Pointer to config struct to fill.
+ * @return true if parsing succeeded, false otherwise.
+ */
 static bool pasrse_command_to_config(const uint8_t *command, uint8_t size, CurrentDrv_Config_t *config)
 {
     if (size != 7 || command == NULL || config == NULL) {
@@ -273,6 +272,11 @@ static bool pasrse_command_to_config(const uint8_t *command, uint8_t size, Curre
     return true;
 }
 
+/**
+ * @brief Handle incoming UART commands.
+ * @param command Pointer to command buffer.
+ * @param size Size of command buffer.
+ */
 static void uart_command_handler(const uint8_t *command, uint8_t size)
 {
     if(size == 0 || command == NULL) {
@@ -444,7 +448,6 @@ static void uart_command_handler(const uint8_t *command, uint8_t size)
                 ESP_LOGE(TAG, "Invalid display command size");
                 return;
             }
-            
             if(command[1] == 0x01) {
                 DisplayM_EnableDemoMode(true);
                 ESP_LOGI(TAG, "Display mode set to DEMO");
@@ -468,10 +471,18 @@ static void uart_command_handler(const uint8_t *command, uint8_t size)
             ESP_LOGI(TAG, "| Set Print Mode       | 0x0C       | [0x0C, 0x00] or [0x0C, 0x01]    | Raw (0x00) or ASCII (0x01) output           |");
             ESP_LOGI(TAG, "| Channel Config       | 0x0D       | [0x0D, <ch1>, <ch2>, <ch3>]     | Set channel configuration. Details in readme|");
             ESP_LOGI(TAG, "| Status               | 0x0E       | [0x0E]                          | Query current status/config                 |");
+            ESP_LOGI(TAG, "| Display              | 0x0F       | [0x0F, 0x00/0x01]               | Set display mode (normal/demo)              |");
             break;
     }
 }
 
+/**
+ * @brief Fill buffer with channel data based on configuration.
+ * @param buffer Output buffer.
+ * @param data Pointer to raw data.
+ * @param config Pointer to channel config.
+ * @return Number of bytes written to buffer.
+ */
 static uint8_t uart_fill_channel_data(uint8_t *buffer, const ina219_data_raw_t *data, const CurrentDrv_ChannelCfg_t* const config)
 {
     if (buffer == NULL || data == NULL || config == NULL) {
@@ -498,6 +509,13 @@ static uint8_t uart_fill_channel_data(uint8_t *buffer, const ina219_data_raw_t *
     return size;
 }
 
+/**
+ * @brief Prepare UART message with measurement data.
+ * @param buffer Output buffer.
+ * @param data Pointer to full measurement data.
+ * @param config Pointer to full channel config.
+ * @return Number of bytes in prepared message.
+ */
 static uint8_t uart_prepare_message(uint8_t *buffer, const ina219_full_data_t *data, const CurrentDrv_Config_t* const config)
 {
     if (buffer == NULL || data == NULL || config == NULL) {
