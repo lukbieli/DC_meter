@@ -14,11 +14,8 @@
 
 #include "CommM.h"
 #include "CurrentDrv.h"
+#include "DisplayM.h"
 
-
-
-#define I2C_PORT 0
-#define I2C_ADDR CONFIG_EXAMPLE_I2C_ADDR
 
 const static char *TAG = "DC_Meter";
 
@@ -31,4 +28,6 @@ void app_main()
     xTaskCreate(CurrentDrv_Task, "CurrentDrv_Task", configMINIMAL_STACK_SIZE * 8, NULL, 5, NULL);
 
     xTaskCreate(CommM_Task, "CommM_Task", configMINIMAL_STACK_SIZE * 8, NULL, 4, NULL);
+
+    DisplayM_Init();
 }

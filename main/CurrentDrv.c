@@ -256,6 +256,19 @@ void CurrentDrv_StartTimer(bool auto_cfg_en)
     auto_config_enabled = auto_cfg_en; // Set the flag for auto-configuration
 }
 
+void CurrentDrv_GetAvgData(ina219_full_data_t *data)
+{
+    if (data == NULL) {
+        ESP_LOGE(TAG, "Invalid data pointer for average data");
+        return;
+    }
+
+    // Copy the average data from each channel instance
+    memcpy(&data->ch1, &channel_instances[0].avg_data, sizeof(ina219_data_raw_t));
+    memcpy(&data->ch2, &channel_instances[1].avg_data, sizeof(ina219_data_raw_t));
+    memcpy(&data->ch3, &channel_instances[2].avg_data, sizeof(ina219_data_raw_t));
+}
+
 // Timer callback to notify task_ina219
 void IRAM_ATTR timer_notify_task_ina219(void* arg) {
     if (task_ina219_handle) {

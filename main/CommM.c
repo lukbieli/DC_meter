@@ -15,6 +15,7 @@
 #include <driver/uart.h>
 #include "CommM.h"
 #include "CurrentDrv.h"
+#include "DisplayM.h"
 
 // -----------------------------------------------------------------------------
 // Macros and Definitions
@@ -32,6 +33,7 @@ typedef enum CommandType {
     CMD_PRINT_MODE = 0x0C, // Print mode command
     CMD_CHANNEL_CFG = 0x0D, // Channel configuration command
     CMD_STATUS = 0x0E, // Status command
+    CMD_DISPLAY = 0x0F, // Display command
     CMD_MAX
 } CommandType_t;
 
@@ -433,6 +435,25 @@ static void uart_command_handler(const uint8_t *command, uint8_t size)
                 ESP_LOGE(TAG, "Unknown print mode: %d", current_print_mode);
             }
             
+            break;
+
+        case CMD_DISPLAY:
+            // Handle display command
+            // ESP_LOGI(TAG, "Display command received");
+            if(size < 2) {
+                ESP_LOGE(TAG, "Invalid display command size");
+                return;
+            }
+            
+            if(command[1] == 0x01) {
+                DisplayM_EnableDemoMode(true);
+                ESP_LOGI(TAG, "Display mode set to DEMO");
+            } else if(command[1] == 0x00) {
+                DisplayM_EnableDemoMode(false);
+                ESP_LOGI(TAG, "Display mode set to NORMAL");
+            } else {
+                ESP_LOGE(TAG, "Unknown display mode: %d", command[1]);
+            }
             break;
 
         default:
