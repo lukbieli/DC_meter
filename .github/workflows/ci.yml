@@ -32,6 +32,15 @@ jobs:
           . ./export.sh
         shell: bash
 
+      - name: Fix submodules and dependencies
+        run: |
+          git submodule update --init --recursive
+          # Clone esp-idf-lib if not present (for CI only)
+          if [ ! -d "esp-idf-lib" ]; then
+            git clone --depth 1 https://github.com/UncleRus/esp-idf-lib.git esp-idf-lib
+          fi
+        shell: bash
+
       - name: Build project
         run: |
           . ./esp-idf/export.sh
