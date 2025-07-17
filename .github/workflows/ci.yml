@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IDF_PATH: ${{ github.workspace }}/esp-idf
+      ESP_IDF_LIB_PATH: ${{ github.workspace }}/esp-idf-lib/components
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -44,7 +45,7 @@ jobs:
       - name: Build project
         run: |
           . ./esp-idf/export.sh
-          idf.py build
+          idf.py build -DEXTRA_COMPONENT_DIRS=$ESP_IDF_LIB_PATH
         shell: bash
 
       - name: Archive build output
