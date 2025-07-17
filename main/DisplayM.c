@@ -1,8 +1,6 @@
-/*
- * SPDX-FileCopyrightText: 2021-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: CC0-1.0
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Lukasz Bielinski
+
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_err.h"
@@ -56,6 +54,7 @@ static const char *TAG = "DisplayM";
 
 #define UPDATE_SCREEN_PERIOD_MS 200 // Update screen every 200ms
 #define SLEEP_BLINK_COUNT 8 // Number of blinks before going to sleep
+#define LONG_PRESS_THRESHOLD_MS 2000 // Threshold for long press in milliseconds
 
 //---------------------------------------------------
 //            Type definitions
@@ -303,14 +302,14 @@ static uint32_t get_random_blink_period()
  * @brief ISR handler for button press.
  * 
  * This function reads the button state directly in the ISR and sets the button_pressed flag.
- * It assumes the button is active low, meaning it reads 0 when pressed.
+ * It assumes the button is active high, meaning it reads 1 when pressed.
  * 
  * @param arg Unused argument, can be NULL.
  */
 static void IRAM_ATTR button_isr_handler(void* arg) {
     // Read pin state directly in ISR
     int level = gpio_get_level(BUTTON_GPIO);
-    button_pressed = (level == 1); // Assuming active low button
+    button_pressed = (level == 1); // active high button
 }
 
 /**
@@ -321,6 +320,7 @@ static void IRAM_ATTR button_isr_handler(void* arg) {
 static void button_task(void *arg) {
     lv_disp_t *disp = (lv_disp_t *)arg;
     bool last_state = false;
+    int button_long_press_counter = 0;
     while (1) {
         if (button_pressed != last_state) {
             last_state = button_pressed;
@@ -364,6 +364,27 @@ static void button_task(void *arg) {
                     }
                 }
             }
+        }
+
+        if(button_pressed == true)
+        {
+            if(button_long_press_counter++ > LONG_PRESS_THRESHOLD_MS/20) {
+                button_long_press_counter = 0; // Reset counter
+                if(demo_mode_enabled)
+                {
+                    // Switch to normal mode
+                    DisplayM_EnableDemoMode(false);
+                }
+                else
+                {
+                    // Switch to demo mode
+                    DisplayM_EnableDemoMode(true);
+                }
+            }
+        }
+        else
+        {
+            button_long_press_counter = 0; // Reset counter
         }
     
 

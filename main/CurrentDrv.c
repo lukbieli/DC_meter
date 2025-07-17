@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Lukasz Bielinski
+
 #include <stdio.h>
 #include <string.h>
 #include <esp_log.h>
@@ -86,7 +89,7 @@ static ChannelInstance_t channel_instances[3] = {
 static TaskHandle_t task_ina219_handle = NULL;
 
 static esp_timer_handle_t periodic_timer;
-static uint32_t timer_period_us = 32000; // Default timer period in microseconds
+static uint32_t timer_period_us = 100000; // Default timer period in microseconds
 
 // -----------------------------------------------------------------------------
 // Local Function Declarations

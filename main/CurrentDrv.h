@@ -1,9 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Lukasz Bielinski
+
 #ifndef CURRENTDRV_H
 #define CURRENTDRV_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 
 #include <freertos/queue.h>
@@ -107,9 +106,5 @@ void CurrentDrv_StartTimer(bool auto_cfg_en);
  * @param data Pointer to the structure to fill with averaged data.
  */
 void CurrentDrv_GetAvgData(ina219_full_data_t *data);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // CURRENTDRV_H

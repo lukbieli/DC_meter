@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Lukasz Bielinski
+
 // CommM.c
 // Implementation of communication module
 
@@ -46,7 +49,7 @@ typedef enum PrintMode {
 // -----------------------------------------------------------------------------
 static QueueHandle_t uart0_queue;
 static const char *TAG = "CommM";
-static PrintMode_t current_print_mode = PRINT_MODE_RAW; // Default print mode
+static PrintMode_t current_print_mode = PRINT_MODE_ASCII; // Default print mode
 
 // -----------------------------------------------------------------------------
 // Static (Private) Function Declarations
@@ -75,7 +78,7 @@ void CommM_Task(void *pvParameters)
     /* Configure parameters of an UART driver,
      * communication pins and install the driver */
     uart_config_t uart_config = {
-        .baud_rate = 256000,
+        .baud_rate = 115200, //256000
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,

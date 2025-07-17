@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Lukasz Bielinski
+
 #ifndef DISPLAYM_H
 #define DISPLAYM_H
 
