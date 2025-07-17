@@ -20,6 +20,13 @@
 #define TEST_PIN GPIO_NUM_4
 #define AVG_SAMPLE_COUNT 10 // Number of samples for averaging
 
+typedef struct {
+    float bus_voltage;      //!< Bus voltage, V
+    float shunt_voltage;    //!< Shunt voltage, V
+    float current;          //!< Current, A
+    float power;            //!< Power, W
+} raw_data_t;
+
 typedef struct ChannelInstance {
     ina219_t dev;
     CurrentDrv_ChannelCfg_t config;
@@ -292,7 +299,7 @@ static void ina_init(ChannelInstance_t* channel)
  */
 static void read_ina219_data(ChannelInstance_t* channel, ina219_data_raw_t *data)
 {
-    ina219_data_t raw_data = {0};
+    raw_data_t raw_data = {0};
     // ina219_get_data(dev, &raw_data);
 
     if(channel == NULL || data == NULL) {
