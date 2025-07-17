@@ -28,12 +28,10 @@ Includes firmware, 3D printable enclosure, wiring diagrams, and ready-to-use Ser
 | Qty | Part                     | Description                | Link  |
 |-----|--------------------------|----------------------------|------------------------------|
 | 1   | ESP32 DEVKIT V1          | Main MCU board             | [ESP32 DEVKIT V1](https://pl.aliexpress.com/item/1005008127727230.html?spm=a2g0o.productlist.main.2.4fbd5b81pgBHzn&algo_pvid=c88f3f80-693c-4b7c-a2af-bbc7c63ec258&algo_exp_id=c88f3f80-693c-4b7c-a2af-bbc7c63ec258-1&pdp_ext_f=%7B%22order%22%3A%2238%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21PLN%2122.65%2113.59%21%21%2143.35%2126.01%21%40211b81a317527376772814506eaa8a%2112000043901420260%21sea%21PL%21715926589%21X&curPageLogUid=SpOfImPENdXV&utparam-url=scene%3Asearch%7Cquery_from%3A)          |
-| 3   | INA219 Module            | Current sensor             | [INA219 Module](https://pl.aliexpress.com/item/1005007533576335.html?spm=a2g0o.productlist.main.2.3a71277ePU7ICO&algo_pvid=e4750828-6368-40c8-b0e3-5eaaf1fcc03b&algo_exp_id=e4750828-6368-40c8-b0e3-5eaaf1fcc03b-1&pdp_ext_f=%7B%22order%22%3A%221107%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21PLN%215.89%215.89%21%21%2111.27%2111.27%21%40211b618e17527376490881295ebe02%2112000041187110498%21sea%21PL%21715926589%21X&curPageLogUid=7Y2tgRzAIr8I&utparam-url=scene%3Asearch%7Cquery_from%3A)            |
-| 1   | SSD1306 OLED 64x48       | Display (I2C)              | [SSD1306 OLED 64x48](https://pl.aliexpress.com/item/1005009104650988.html?spm=a2g0o.productlist.main.14.364b70ccK7vAJt&algo_pvid=7561c30e-addf-48a8-bd58-e218e409d835&algo_exp_id=7561c30e-addf-48a8-bd58-e218e409d835-13&pdp_ext_f=%7B%22order%22%3A%224%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21PLN%2120.60%219.89%21%21%2139.43%2118.93%21%402103834817527375947432796eafd5%2112000047927651567%21sea%21PL%21715926589%21X&curPageLogUid=RUCYAkoLKWPg&utparam-url=scene%3Asearch%7Cquery_from%3A)       |
-| 1   | TTP233 Capacitive Button | Touch button (digital out) | [TTP233](https://pl.aliexpress.com/item/1005007480801162.html?spm=a2g0o.productlist.main.2.60db7b0dT9bB1q&algo_pvid=bab3657f-b8aa-4d3d-a3e3-f439a6e89ffb&algo_exp_id=bab3657f-b8aa-4d3d-a3e3-f439a6e89ffb-1&pdp_ext_f=%7B%22order%22%3A%22497%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21PLN%214.83%214.28%21%21%219.24%218.19%21%402103846917527374835031666ef36d%2112000040925382366%21sea%21PL%21715926589%21X&curPageLogUid=utwQNHSnM42H&utparam-url=scene%3Asearch%7Cquery_from%3A)                   |
-| 1   | 3D Printed Enclosure     | STL/3MF files provided     | [3D Model](https://cad.onshape.com/documents/d86296f212e362e831ebef51/w/36947445886156c88ad6d59d/e/d64ef3975a24c979aa83f3d0?renderMode=0&uiState=6878a691e7ee6026786253c3)                 |
-| n   | Wires, Connectors        | For assembly               |                              |
-| n   | Pull-up resistors        | For I2C lines (if needed)  |                              |
+| 2   | INA219 Module            | Current sensor             | [INA219 Module](https://pl.aliexpress.com/item/1005007533576335.html?spm=a2g0o.productlist.main.2.3a71277ePU7ICO&algo_pvid=e4750828-6368-40c8-b0e3-5eaaf1fcc03b&algo_exp_id=e4750828-6368-40c8-b0e3-5eaaf1fcc03b-1&pdp_ext_f=%7B%22order%22%3A%221107%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21PLN%215.89%215.89%21%21%2111.27%2111.27%21%40211b618e17527376490881295ebe02%2112000041187110498%21sea%21PL%21715926589%21X&curPageLogUid=7Y2tgRzAIr8I&utparam-url=scene%3Asearch%7Cquery_from%3A)            |
+| 3   | SSD1306 OLED 64x48       | Display (I2C)              | [SSD1306 OLED 64x48](https://pl.aliexpress.com/item/1005009104650988.html?spm=a2g0o.productlist.main.14.364b70ccK7vAJt&algo_pvid=7561c30e-addf-48a8-bd58-e218e409d835&algo_exp_id=7561c30e-addf-48a8-bd58-e218e409d835-13&pdp_ext_f=%7B%22order%22%3A%224%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21PLN%2120.60%219.89%21%21%2139.43%2118.93%21%402103834817527375947432796eafd5%2112000047927651567%21sea%21PL%21715926589%21X&curPageLogUid=RUCYAkoLKWPg&utparam-url=scene%3Asearch%7Cquery_from%3A)       |
+| 4   | TTP233 Capacitive Button | Touch button (digital out) | [TTP233](https://pl.aliexpress.com/item/1005007480801162.html?spm=a2g0o.productlist.main.2.60db7b0dT9bB1q&algo_pvid=bab3657f-b8aa-4d3d-a3e3-f439a6e89ffb&algo_exp_id=bab3657f-b8aa-4d3d-a3e3-f439a6e89ffb-1&pdp_ext_f=%7B%22order%22%3A%22497%22%2C%22eval%22%3A%221%22%7D&pdp_npi=4%40dis%21PLN%214.83%214.28%21%21%219.24%218.19%21%402103846917527374835031666ef36d%2112000040925382366%21sea%21PL%21715926589%21X&curPageLogUid=utwQNHSnM42H&utparam-url=scene%3Asearch%7Cquery_from%3A)                   |
+| 5   | 3D Printed Enclosure     | STL/3MF files provided     | [3D Model](https://cad.onshape.com/documents/d86296f212e362e831ebef51/w/36947445886156c88ad6d59d/e/d64ef3975a24c979aa83f3d0?renderMode=0&uiState=6878a691e7ee6026786253c3)                 |
 
 ---
 
@@ -52,8 +50,8 @@ Includes firmware, 3D printable enclosure, wiring diagrams, and ready-to-use Ser
 | INA219 VCC/GND | 3V3/GND | ESP32           |
 
 **Note:**  
-- Project uses separate I2C buses to povide conflicts on I2C when measurement period is very fast.
-- Connect all INA219 to one I2C and OLEd to second one.
+- Project uses separate I2C buses to povide conflicts on I2C when measurement period is very small.
+- Connect all INA219 to one I2C and OLED to second one.
 - Use pull-up resistors (typically 4.7kΩ) on SDA/SCL if not present on modules.
 - TTP233 OUT connects to ESP32 GPIO 34 (digital input).
 
